@@ -1,7 +1,12 @@
-//#include <PWM_Motor.h>
 #include <Servo.h>
 #include <XBOXRECV.h>
 #include <Wire.h>
+
+#include <PID_v1.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BNO055.h>
+#include <utility/imumaths.h>
+Adafruit_BNO055 bno = Adafruit_BNO055(55);
 
 USB Usb;
 XBOXRECV Xbox(&Usb);
@@ -10,6 +15,13 @@ Servo FL;
 Servo FR;
 Servo RL;
 Servo RR;
+
+const double headingP = 0, headingI = 0, headingD = 0;
+bool headingStarted = true;
+double pidCorrection = 0;
+double headingErr = 0;
+double desiredHeading = 0;
+PID headingPID(&headingErr, &pidCorrection, &desiredHeading, headingP, headingI, headingD, DIRECT);
 
 void setup() {
   Serial.begin(115200);
@@ -26,6 +38,22 @@ void setup() {
   FR.attach(3);
   RL.attach(4);
   RR.attach(5);
+
+  Serial.println("Orientation Sensor Test"); Serial.println("");
+  /* Initialise the sensor */
+  if(!bno.begin())
+  {
+    /* There was a problem detecting the BNO055 ... check your connections */
+    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+    headingStarted = false;
+//    while(1);
+  }
+
+  delay(1000);
+    
+  bno.setExtCrystalUse(true);
+
+  headingPID.SetMode(AUTOMATIC);
 }
 
 void loop() {

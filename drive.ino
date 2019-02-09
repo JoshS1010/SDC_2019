@@ -6,7 +6,16 @@ int forward = 0;
 int rotate = 0;
 int strafe = 0;
 
+unsigned long headingMillis = 0;
+const long headingInterval = 5;
+
+sensors_event_t event;
+
 void drive(){
+
+  headingCorrection();
+
+  //drive
   forward = Xbox.getButtonPress(R2, 0) - Xbox.getButtonPress(L2, 0);
   strafe = rightXaxis(0);
 
@@ -31,6 +40,14 @@ void drive(){
   int RLmotor = -forward + strafe - rotate;
   int RRmotor = +forward + strafe - rotate;
 
+  Serial.print(FLmotor);
+  Serial.print("  ");
+  Serial.print(FRmotor);
+  Serial.print("  ");
+  Serial.print(RLmotor);
+  Serial.print("  ");
+  Serial.println(RRmotor);
+  
   FLmotor = reMap(FLmotor);
   FRmotor = reMap(FRmotor);
   RLmotor = reMap(RLmotor);
@@ -43,10 +60,10 @@ void drive(){
 }
 
 void killDrive() {
-  FL.write(92);
-  FR.write(92);
-  RL.write(92);
-  RR.write(92);
+  FL.write(reMap(0));
+  FR.write(reMap(0));
+  RL.write(reMap(0));
+  RR.write(reMap(0));
 }
 
 int reMap(int val){
@@ -58,5 +75,39 @@ int reMap(int val){
   }
   else{
     return map(val, -255, 255, MIN_VALUE, MAX_VALUE);
+  }
+}
+
+float headingError(){
+  float degRight, degLeft;
+  float actualHeading = event.orientation.x;
+  if (actualHeading > desiredHeading){
+    degRight = 360 - actualHeading + desiredHeading;
+  }
+  else {
+    degRight = desiredHeading - actualHeading;
+  }
+  degLeft = 360 - degRight;
+
+  if (degRight < degLeft){
+    return -degRight;
+  }
+  else {
+    return degLeft;
+  }
+}
+
+float setHeading(){
+  desiredHeading = event.orientation.x;
+}
+
+void headingCorrection(){
+  if(headingStarted){
+    unsigned long currentMillis = millis();
+    if (currentMillis - headingMillis >= headingInterval){ //update current heading every headingInterval ms
+      bno.getEvent(&event);
+      headingError();
+      headingPID.Compute();
+    }
   }
 }
