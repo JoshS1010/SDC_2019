@@ -9,6 +9,10 @@ int strafe = 0;
 unsigned long headingMillis = 0;
 const long headingInterval = 5;
 
+bool turning = false;
+unsigned long turningMillis = 0;
+const unsigned long turningInterval = 250;
+
 sensors_event_t event;
 
 void drive(){
@@ -28,25 +32,36 @@ void drive(){
 
   //rotate dual rate
   if (abs(forward) <= abs(strafe)) {
-    rotate = leftXaxis(0) * ((1 - dualRate) * ((float)abs(strafe) / 255.0 - 1) + 1);
+    rotate = (leftXaxis(0) + pidCorrection) * ((1 - dualRate) * ((float)abs(strafe) / 255.0 - 1) + 1);
   }
   else {
-    rotate = leftXaxis(0) * ((1 - dualRate) * ((float)abs(forward) / 255.0 - 1) + 1);
+    rotate = (leftXaxis(0) + pidCorrection) * ((1 - dualRate) * ((float)abs(forward) / 255.0 - 1) + 1);
   }
 
+  if (leftXaxis(0) != 0){
+    turning = true;
+    headingPID.SetMode(MANUAL);
+    pidCorrection = 0;
+    turningMillis = millis();
+  }
+
+  /***************************************************************************************************************/
+  unsigned long currentMillis = millis();
+  if (currentMillis - turningMillis >= turningInterval && turning){
+    turning = false;
+    setHeading();
+    headingPID.SetMode(AUTOMATIC);
+  }
+  
   //CCW is positive
   int FLmotor = -forward - strafe - rotate;
   int FRmotor = +forward - strafe - rotate;
   int RLmotor = -forward + strafe - rotate;
   int RRmotor = +forward + strafe - rotate;
 
-  Serial.print(FLmotor);
-  Serial.print("  ");
-  Serial.print(FRmotor);
-  Serial.print("  ");
-  Serial.print(RLmotor);
-  Serial.print("  ");
-  Serial.println(RRmotor);
+  Serial.print(headingErr);
+  Serial.print("   ");
+  Serial.println(pidCorrection);
   
   FLmotor = reMap(FLmotor);
   FRmotor = reMap(FRmotor);
@@ -106,7 +121,7 @@ void headingCorrection(){
     unsigned long currentMillis = millis();
     if (currentMillis - headingMillis >= headingInterval){ //update current heading every headingInterval ms
       bno.getEvent(&event);
-      headingError();
+      headingErr = headingError();
       headingPID.Compute();
     }
   }

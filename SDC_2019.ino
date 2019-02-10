@@ -16,12 +16,12 @@ Servo FR;
 Servo RL;
 Servo RR;
 
-const double headingP = 0, headingI = 0, headingD = 0;
+const double headingP = 2.5 , headingI = .75, headingD = 0, pidHeading = 0;
 bool headingStarted = true;
 double pidCorrection = 0;
 double headingErr = 0;
 double desiredHeading = 0;
-PID headingPID(&headingErr, &pidCorrection, &desiredHeading, headingP, headingI, headingD, DIRECT);
+PID headingPID(&headingErr, &pidCorrection, &pidHeading, headingP, headingI, headingD, DIRECT);
 
 void setup() {
   Serial.begin(115200);
@@ -32,28 +32,29 @@ void setup() {
     Serial.print(F("\r\nOSC did not start"));
     while (1); //halt
   }
-  Serial.print(F("\r\nXbox Wireless Receiver Library Started"));
+  Serial.println(F("\r\nXbox Wireless Receiver Library Started"));
 
-  FL.attach(2);
-  FR.attach(3);
-  RL.attach(4);
-  RR.attach(5);
+  FL.attach(40);
+  FR.attach(42);
+  RL.attach(44);
+  RR.attach(46);
 
   Serial.println("Orientation Sensor Test"); Serial.println("");
   /* Initialise the sensor */
-  if(!bno.begin())
+  if (!bno.begin())
   {
     /* There was a problem detecting the BNO055 ... check your connections */
     Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
     headingStarted = false;
-//    while(1);
+    //    while(1);
   }
 
   delay(1000);
-    
+
   bno.setExtCrystalUse(true);
 
   headingPID.SetMode(AUTOMATIC);
+  headingPID.SetOutputLimits(-255, 255);
 }
 
 void loop() {
@@ -66,7 +67,7 @@ void loop() {
 
 
 
-      
+
     }
     else killDrive(); //kill drive motors if controller disconnects
   }
