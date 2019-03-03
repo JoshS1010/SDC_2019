@@ -6,6 +6,17 @@ int forward = 0;
 int rotate = 0;
 int strafe = 0;
 
+Servo FL;
+Servo FR;
+Servo RL;
+Servo RR;
+
+const double headingP = 2.5 , headingI = .75, headingD = 0, pidHeading = 0;
+double pidCorrection = 0;
+double headingErr = 0;
+double desiredHeading = 0;
+PID headingPID(&headingErr, &pidCorrection, &pidHeading, headingP, headingI, headingD, DIRECT);
+
 unsigned long headingMillis = 0;
 const long headingInterval = 5;
 
@@ -125,4 +136,14 @@ void headingCorrection(){
       headingPID.Compute();
     }
   }
+}
+
+void driveInitialize(){
+  FL.attach(FLpin);
+  FR.attach(FRpin);
+  RL.attach(RLpin);
+  RR.attach(RRpin);
+
+  headingPID.SetMode(AUTOMATIC);
+  headingPID.SetOutputLimits(-255, 255);
 }
