@@ -1,52 +1,47 @@
-#include <Motor.h>
-
 int armPosition = 0;
-const int tolerance = 10;
+const int armPIDactive = 100;
+const int armTolerance = 10;
 const int armBrake = 255;
 const int armHomeSpeed = -50;
 const int armLimitPin = 24;
 
+const double armP = 1 , armI = 0, armD = 1;
+double desiredArmPosition = 0;
+double armError = 0;
+double armSpeed = 0;
+double arm0 = 0;
+PID armPID(&arm0, &armSpeed, &armError, armP, armI, armP, DIRECT);
+
 Motor armMotor(32, 34, 5);
 
-void armAndDoor() {
-  Serial.println (armPosition);
-  if (moveArm(400)) {
-    //    Serial.println("done");
-  }
-}
-
 bool moveArm(int pos) {
-  int s;
-  if (armPosition < pos - tolerance) {
-    if (pos - armPosition > 100) {
-      s = 255;
-    }
-    else if (pos - armPosition > 70) {
-      s = 150;
+  if (armPosition < pos - armTolerance) {
+    if (pos - armPosition > armPIDactive) {
+      armSpeed = 255;
+      armPID.SetMode(MANUAL);
+      return false;
     }
     else {
-      s = 100;
+      armPID.SetMode(AUTOMATIC);
+      armPID.Compute();
+      return false;
     }
-    armMotor.drive(s);
-//    armMotor.drive(255);
-    return false;
   }
-  else if (armPosition > pos + tolerance) {
-    if (armPosition - pos > 100) {
-      s = -255;
-    }
-    else if (armPosition - pos > 70) {
-      s = -150;
+  else if (armPosition > pos + armTolerance) {
+    if (armPosition - pos > armPIDactive) {
+      armSpeed = -255;
+      armPID.SetMode(MANUAL);
+      return false;
     }
     else {
-      s = -100;
+      armPID.SetMode(AUTOMATIC);
+      armPID.Compute();
+      return false;
     }
-    armMotor.drive(s);
-//    armMotor.drive(-255);
-    return false;
   }
   else {
-    armMotor.drive(0);
+    armPID.SetMode(AUTOMATIC);
+    armPID.Compute();
     return true;
   }
 }
@@ -88,10 +83,13 @@ void armInitialize(){
 
   pinMode(armLimitPin, INPUT_PULLUP);    // arm limit switch
 
+  armPID.SetMode(MANUAL);
+  armPID.SetOutputLimits(-255, 255);
+
   armMotor.flipPolarity();
   armMotor.setCoastBrake(armBrake);
 
-  while (homeArm()) {}
+//  while (homeArm()) {}
 }
 
 void armEncoder0() {
@@ -108,4 +106,9 @@ void armEncoder1() {
   } else {
     armPosition++;
   }
+}
+
+void armDrive(int s){
+  Serial.println(armPosition);
+  armMotor.drive(s);
 }

@@ -1,3 +1,4 @@
+#include <Motor.h>
 #include <Servo.h>
 #include <XBOXRECV.h>
 //#include <Wire.h>
@@ -39,6 +40,7 @@ void setup() {
 
   driveInitialize();
   armInitialize();
+  doorInitialize();
 }
 
 void loop() {
@@ -49,7 +51,8 @@ void loop() {
     if (Xbox.Xbox360Connected[0]) {
       drive();
       armAndDoor();
-
+//      moveDoor(300);
+  
     }
     else killDrive(); //kill drive motors if controller disconnects
   }

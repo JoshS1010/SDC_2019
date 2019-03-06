@@ -70,9 +70,9 @@ void drive(){
   int RLmotor = -forward + strafe - rotate;
   int RRmotor = +forward + strafe - rotate;
 
-  Serial.print(headingErr);
-  Serial.print("   ");
-  Serial.println(pidCorrection);
+//  Serial.print(headingErr);
+//  Serial.print("   ");
+//  Serial.println(pidCorrection);
   
   FLmotor = reMap(FLmotor);
   FRmotor = reMap(FRmotor);
