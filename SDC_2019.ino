@@ -51,8 +51,6 @@ void loop() {
     if (Xbox.Xbox360Connected[0]) {
       drive();
       armAndDoor();
-//      moveDoor(300);
-  
     }
     else killDrive(); //kill drive motors if controller disconnects
   }

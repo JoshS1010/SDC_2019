@@ -1,6 +1,6 @@
-const float dualRate = .35;
-const int MAX_VALUE = 172;
-const int MIN_VALUE = 12;
+const float dualRate = .25;
+const int MAX_VALUE = 172;  //max 172
+const int MIN_VALUE = 12;   //min 12
 
 int forward = 0;
 int rotate = 0;
@@ -11,7 +11,7 @@ Servo FR;
 Servo RL;
 Servo RR;
 
-const double headingP = 2.5 , headingI = .75, headingD = 0, pidHeading = 0;
+const double headingP = 2.0 , headingI = .5, headingD = 0, pidHeading = 0;
 double pidCorrection = 0;
 double headingErr = 0;
 double desiredHeading = 0;

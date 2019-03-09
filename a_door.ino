@@ -7,13 +7,6 @@ const int doorLimitPin = 26;
 
 bool doorHomed = false;
 
-const double doorP = .2 , doorI = 0, doorD = 0;
-double desiredDoorPosition = 0;
-double doorError = 0;
-double doorSpeed = 0;
-double door0 = 0;
-PID doorPID(&door0, &doorSpeed, &doorError, doorP, doorI, doorP, DIRECT);
-
 Motor doorMotor(30, 28, 4);
 
 bool moveDoor(int pos) {
@@ -66,8 +59,8 @@ void doorInitialize(){
 
   pinMode(doorLimitPin, INPUT_PULLUP);    // door limit switch
 
-  doorPID.SetMode(MANUAL);
-  doorPID.SetOutputLimits(-255, 255);
+//  doorPID.SetMode(MANUAL);
+//  doorPID.SetOutputLimits(-255, 255);
 
   doorMotor.setCoastBrake(doorBrake);
   doorMotor.flipPolarity();
