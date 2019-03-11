@@ -1,5 +1,5 @@
 #define armScore      -50   //done
-#define armStorage    385   //done   
+#define armStorage    400   //done   
 #define armGatherHigh 330   //done
 #define armGatherLow  400   //done
 #define armBlock      520   //done
@@ -24,25 +24,26 @@ void armAndDoor() {
     //arm and door code here
     if (Xbox.getButtonPress(B, 0)){ //score balls
       moveArm(armScore);
-      moveDoor(doorScore);
-      doorHomed = false;
+      openDoor();
     }
     else if (forward < doorShutThreshold){ //close door under deceleration
-      moveArm(armBlock);
+      if(moveArm(armBlock)){
+      }
+      armCalibrate();
       if (armPosition > doorHomeValue){
-        homeDoor();
+        closeDoor();
       }
     }
     else if (Xbox.getButtonPress(A, 0)){ //get big balls
       moveArm(armGatherHigh);
       if (armPosition > doorHomeValue){
-        homeDoor();
+        closeDoor();
       }
     }
     else {
       moveArm(armGatherLow);
       if (armPosition > doorHomeValue){
-        homeDoor();
+        closeDoor();
       }
     }
   }

@@ -1,13 +1,17 @@
 int armPosition = 0;
-const int armPIDactive = 50;
-const int armTolerance = 10;
+const int armPIDactive = 90;
+const int armTolerance = 20;
 const int armBrake = 255;
 const int armHomeSpeed = -70;
 const int armLimitPin = 24;
+const int armClosedPin = 7;
+const long armClosedInterval = 50;
 
 bool armHomed = false;
 
-const double armP = 1.3 , armI = 1, armD = 1;
+int test = 0;
+
+const double armP = 1.3 , armI = .2, armD = .2; //1.3  1  1
 double desiredArmPosition = 0;
 double armError = 0;
 double armSpeed = 0;
@@ -17,34 +21,24 @@ PID armPID(&arm0, &armSpeed, &armError, armP, armI, armP, DIRECT);
 Motor armMotor(32, 34, 5);
 
 bool moveArm(int pos) {
-  Serial.print(armPosition);
-  Serial.print("    ");
-  Serial.print(desiredArmPosition);
-  Serial.print("    ");
-  Serial.println(armSpeed);
   armMotor.drive(armSpeed);
   desiredArmPosition = pos;
   armError = desiredArmPosition - armPosition;
-//  Serial.print(armSpeed);
   if (armPosition < pos - armTolerance) {
     if (pos - armPosition > armPIDactive) {
       armSpeed = 255;
-//      Serial.println("   full speed");
     }
     else {
       armPID.Compute();
-//      Serial.println("   PID Mode");
     }
     return false;
   }
   else if (armPosition > pos + armTolerance) {
     if (armPosition - pos > armPIDactive) {
       armSpeed = -255;
-      Serial.println("   full speed");
     }
     else {
       armPID.Compute();
-      Serial.println("   PID Mode");
     }
     return false;
   }
@@ -56,6 +50,7 @@ bool moveArm(int pos) {
 bool homeArm() {
   Serial.println("homing arm");
   static bool hit = false;
+  static bool first = true;
   if (!armHomed){
     if (digitalRead(armLimitPin) == LOW) {
       hit = true;
@@ -65,6 +60,12 @@ bool homeArm() {
       return true;
     }
     else if (digitalRead(armLimitPin) == LOW && hit) {
+      if (first){
+        first = false;
+        delay(200);
+        armMotor.drive(0);
+        delay(500);
+      }
       armMotor.drive(-armHomeSpeed * 2/3);
       return true;
     }
@@ -86,6 +87,7 @@ void armInitialize(){
   attachInterrupt(1, armEncoder1, RISING);    //arm encoder
 
   pinMode(armLimitPin, INPUT_PULLUP);    // arm limit switch
+  pinMode(armClosedPin, INPUT_PULLUP);
 
   armPID.SetMode(AUTOMATIC);
   armPID.SetOutputLimits(-255, 255);
@@ -115,4 +117,28 @@ void armEncoder1() {
 void armDrive(int s){
   Serial.println(armPosition);
   armMotor.drive(s);
+}
+
+void armCalibrate(){
+  static bool hit = false;
+  static bool set = false;
+  static long previousMillis = 0;
+  long currentMillis = millis();
+  if (digitalRead(armClosedPin) == LOW){
+    if (!hit){
+      previousMillis = currentMillis;
+      hit = true;
+    }
+    if (!set){
+      if (currentMillis - previousMillis >= armClosedInterval){
+        test = armPosition;
+        armPosition = 520;
+        set = true;
+      }
+    }
+  }
+  else{
+    hit = false;
+    set = false;
+  }
 }

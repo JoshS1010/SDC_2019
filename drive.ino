@@ -1,6 +1,6 @@
 const float dualRate = .25;
-const int MAX_VALUE = 172;  //max 172
-const int MIN_VALUE = 12;   //min 12
+const int MAX_VALUE = 170;  //max 172
+const int MIN_VALUE = 10;   //min 12
 
 int forward = 0;
 int rotate = 0;
