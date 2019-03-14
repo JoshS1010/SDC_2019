@@ -1,6 +1,6 @@
 const float dualRate = .25;
-const int MAX_VALUE = 170;  //max 172
-const int MIN_VALUE = 10;   //min 12
+const int MAX_VALUE = 172;  //max 172
+const int MIN_VALUE = 12;   //min 12
 
 int forward = 0;
 int rotate = 0;
@@ -11,7 +11,7 @@ Servo FR;
 Servo RL;
 Servo RR;
 
-const double headingP = 2.0 , headingI = .5, headingD = 0, pidHeading = 0;
+const double headingP = 3 , headingI = .5, headingD = 0, pidHeading = 0;
 double pidCorrection = 0;
 double headingErr = 0;
 double desiredHeading = 0;
@@ -22,7 +22,7 @@ const long headingInterval = 5;
 
 bool turning = false;
 unsigned long turningMillis = 0;
-const unsigned long turningInterval = 250;
+const unsigned long turningInterval = 200;
 
 sensors_event_t event;
 
@@ -32,7 +32,7 @@ void drive(){
 
   //drive
   forward = Xbox.getButtonPress(R2, 0) - Xbox.getButtonPress(L2, 0);
-  strafe = rightXaxis(0);
+  strafe = rightXaxis(0);   //old strafe code
 
   if (Xbox.getButtonPress(R1, 0)) {
     strafe = 255;
@@ -41,22 +41,33 @@ void drive(){
     strafe = -255;
   }
 
-  //rotate dual rate
+  //this section causes rotate to be less sensative at lower speeds and makes the robot move towards the inside of turns
   if (abs(forward) <= abs(strafe)) {
     rotate = (leftXaxis(0) + pidCorrection) * ((1 - dualRate) * ((float)abs(strafe) / 255.0 - 1) + 1);
+    if (strafe > 20){
+      forward = forward - .5 * leftXaxis(0) * ((1 - dualRate) * ((float)abs(strafe) / 255.0 - 1) + 1);
+    }
+    else if (strafe < -20){
+      forward = forward + .5 * leftXaxis(0) * ((1 - dualRate) * ((float)abs(strafe) / 255.0 - 1) + 1);
+    }
   }
   else {
     rotate = (leftXaxis(0) + pidCorrection) * ((1 - dualRate) * ((float)abs(forward) / 255.0 - 1) + 1);
+    if (forward > 20){
+      strafe = strafe + .5 * leftXaxis(0) * ((1 - dualRate) * ((float)abs(forward) / 255.0 - 1) + 1);
+    }
+    else if (forward < -20){
+      strafe = strafe - .5 * leftXaxis(0) * ((1 - dualRate) * ((float)abs(forward) / 255.0 - 1) + 1);
+    }
   }
 
+  //turn off pid heading hold while turning
   if (leftXaxis(0) != 0){
     turning = true;
     headingPID.SetMode(MANUAL);
     pidCorrection = 0;
     turningMillis = millis();
   }
-
-  /***************************************************************************************************************/
   unsigned long currentMillis = millis();
   if (currentMillis - turningMillis >= turningInterval && turning){
     turning = false;
@@ -69,10 +80,6 @@ void drive(){
   int FRmotor = +forward - strafe - rotate;
   int RLmotor = -forward + strafe - rotate;
   int RRmotor = +forward + strafe - rotate;
-
-//  Serial.print(headingErr);
-//  Serial.print("   ");
-//  Serial.println(pidCorrection);
   
   FLmotor = reMap(FLmotor);
   FRmotor = reMap(FRmotor);
@@ -83,6 +90,7 @@ void drive(){
   FR.write(FRmotor);
   RL.write(RLmotor);
   RR.write(RRmotor);
+
 }
 
 void killDrive() {
@@ -90,6 +98,8 @@ void killDrive() {
   FR.write(reMap(0));
   RL.write(reMap(0));
   RR.write(reMap(0));
+  armDrive(0);
+  doorDrive(0);
 }
 
 int reMap(int val){

@@ -11,7 +11,9 @@ void doorInitialize(){
 
   doorMotor.setCoastBrake(doorBrake);
   doorMotor.flipPolarity();
-  while (!closeDoor()) {}
+  while (!closeDoor()) {
+    bumper.write(bumperUp);
+  }
 }
 
 bool closeDoor(){
@@ -34,4 +36,8 @@ bool openDoor(){
     doorMotor.drive(doorSpeed);
     return false;
   }
+}
+
+void doorDrive(int s){
+  doorMotor.drive(0);
 }

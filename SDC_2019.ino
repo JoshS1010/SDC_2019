@@ -8,6 +8,12 @@
 //#include <utility/imumaths.h>
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
 
+#define bumperUp        35    //35
+#define bumperDown      135
+const int bumperPin = 48;
+
+Servo bumper;
+
 USB Usb;
 XBOXRECV Xbox(&Usb);
 
@@ -34,13 +40,16 @@ void setup() {
     headingStarted = false;
   }
 
+  bumper.attach(bumperPin);
+
   delay(1000);
 
   bno.setExtCrystalUse(true);
-
-  driveInitialize();
+  
+//  driveInitialize();
   armInitialize();
   doorInitialize();
+  bumper.write(bumperUp);
 }
 
 void loop() {
@@ -48,11 +57,11 @@ void loop() {
   Usb.Task();
 
   if (Xbox.XboxReceiverConnected) {
-    if (Xbox.Xbox360Connected[0]) {
+    if (Xbox.Xbox360Connected[0]) {\
       drive();
       armAndDoor();
     }
     else killDrive(); //kill drive motors if controller disconnects
   }
-  else killDrive(); //kill drive motors if receiver disconnects
+  else killDrive();   //kill drive motors if receiver disconnects
 }

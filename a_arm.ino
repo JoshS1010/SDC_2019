@@ -2,7 +2,7 @@ int armPosition = 0;
 const int armPIDactive = 90;
 const int armTolerance = 20;
 const int armBrake = 255;
-const int armHomeSpeed = -70;
+const int armHomeSpeed = -100;
 const int armLimitPin = 24;
 const int armClosedPin = 7;
 const long armClosedInterval = 50;
@@ -11,7 +11,7 @@ bool armHomed = false;
 
 int test = 0;
 
-const double armP = 1.3 , armI = .2, armD = .2; //1.3  1  1
+const double armP = 1.3, armI = .2, armD = .2; //1.3  .2  .2  //2.05  1  0
 double desiredArmPosition = 0;
 double armError = 0;
 double armSpeed = 0;
@@ -20,7 +20,7 @@ PID armPID(&arm0, &armSpeed, &armError, armP, armI, armP, DIRECT);
 
 Motor armMotor(32, 34, 5);
 
-bool moveArm(int pos) {
+bool moveArm(int pos) {         //move arm to desired position and return true when it is there
   armMotor.drive(armSpeed);
   desiredArmPosition = pos;
   armError = desiredArmPosition - armPosition;
@@ -66,7 +66,7 @@ bool homeArm() {
         armMotor.drive(0);
         delay(500);
       }
-      armMotor.drive(-armHomeSpeed * 2/3);
+      armMotor.drive(-armHomeSpeed);
       return true;
     }
     else {
@@ -95,7 +95,13 @@ void armInitialize(){
   armMotor.flipPolarity();
   armMotor.setCoastBrake(armBrake);
 
-  while (homeArm()) {}
+  while (homeArm()) {
+      bumper.write(bumperUp);
+    }
+  while (moveArm(-40)) {
+      bumper.write(bumperUp);
+    }
+  armDrive(0);
 }
 
 void armEncoder0() {
@@ -119,19 +125,21 @@ void armDrive(int s){
   armMotor.drive(s);
 }
 
-void armCalibrate(){
+void armCalibrate(){        //recalibrate the arm every time it blocks balls
   static bool hit = false;
   static bool set = false;
   static long previousMillis = 0;
   long currentMillis = millis();
+  Serial.print("test value: ");
+  Serial.println(test);
   if (digitalRead(armClosedPin) == LOW){
     if (!hit){
+      test = armPosition;
       previousMillis = currentMillis;
       hit = true;
     }
     if (!set){
       if (currentMillis - previousMillis >= armClosedInterval){
-        test = armPosition;
         armPosition = 520;
         set = true;
       }
